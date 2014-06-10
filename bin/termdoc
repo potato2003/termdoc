@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), *%w{ .. lib })
+
+# standard library
+# require 'optparse'
+
+# thrid-party library
+require 'slop'
+require 'colorize'
+
+# termdoc library
+require 'termdoc'
+require 'termdoc/ext/string'
+
+
+#
+# parse the command line arguments.
+#
+begin
+  opt_parser = Slop.parse!(help: true, strict: true) do
+    banner <<-EOS.undent
+      Usage:
+        termdoc <source-path ...> --term <term-file> [<options>]
+    EOS
+
+    on :'term=',         'Specify the term file path'
+    on :s, :silence,     'Enable the slience mode'
+    on :verbose,         'Enable the verbose mode'
+  end
+
+rescue Slop::InvalidOptionError => e
+  warn "[ERROR] #{e.message}".colorize(:red)
+  exit false
+end
+
+
+# add remaining parameters as source code path.
+options = opt_parser.to_h
+options[:src] = ARGV
+
+
+#
+# requirement parameter check
+#
+if options[:src].nil? || options[:src].empty?
+  warn "[ERROR] required parameter source paths is missing".colorize(:red)
+  warn opt_parser.help
+  exit false
+end
+
+
+#
+# main routine
+#
+app = Termdoc::Application.new(options)
+app.run
+
+# vim: set ft=ruby
